@@ -1,0 +1,23 @@
+AllCops:
+  TargetRubyVersion: 2.3
+  DisplayCopNames: true
+  DisplayStyleGuide: true
+
+
+# Because only 2 spaces indent is insane
+Style/IndentationWidth:
+  Width: 4
+
+# Don't require documentation (maybe add that later)
+Style/Documentation:
+  Enabled: false
+
+# Allow compact style
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Metrics/ClassLength:
+  Max: 110
+
+Metrics/MethodLength:
+  Max: 11
