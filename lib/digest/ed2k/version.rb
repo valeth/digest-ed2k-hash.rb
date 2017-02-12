@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 module Digest
-  module Ed2k
-    VERSION = "0.1.0"
-  end
+    class ED2K < Digest::Class
+        VERSION = '0.1.0'
+    end
 end
