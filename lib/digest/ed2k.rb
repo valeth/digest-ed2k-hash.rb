@@ -3,16 +3,27 @@
 require 'digest'
 require 'openssl'
 
-module Digest
+module Digest # :nodoc:
+    # The ED2K hashing algorithm.
     class ED2K < Digest::Class
+        # The ED2K chunk size (9500KB).
         CHUNK_SIZE = 9_728_000
 
-        def initialize(data = nil)
-            @md4 = OpenSSL::Digest::MD4.new
+        # Shortcut to the OpenSSL MD4 class.
+        MD4 = OpenSSL::Digest::MD4
+
+        # Create a new ED2K hash object.
+        #
+        # @return  self  to allow method chaining
+        def initialize
+            @md4 = MD4.new
             reset
-            self << data unless data.nil?
         end
 
+        # Hash an IO object.
+        #
+        # @param   [IO] io  the IO object that will be read
+        # @return  self  to allow method chaining
         def io(io)
             while (buf = io.read(CHUNK_SIZE))
                 self << buf
@@ -21,21 +32,31 @@ module Digest
             self
         end
 
+        # Calculate the hash of a file.
+        #
+        # @param   [String] path  the file that will be read
+        # @return  self  to allow method chaining
         def file(path)
-            File.open(path) do |file|
-                return io(file)
-            end
+            io(File.open(path))
         end
 
+        # Reset to the initial state.
+        #
+        # @return  self  the reset digest object
         def reset
-            @buf = ''
             @md4.reset
             @finalized = false
-            @small = true
+            @small     = true
+            @buf       = ''
 
             self
         end
 
+        # Rehash with new data.
+        #
+        # @param  [String] data  the chunk of data to add to the hash
+        # @return  self  to allow method chaining
+        # @raise  RuntimeError  if the digest object has been finalized
         def update(data)
             raise RuntimeError if @finalized
 
@@ -47,6 +68,10 @@ module Digest
 
         alias << update
 
+        # Finalize the digest.
+        #
+        # @param  [String] str  use this string to digest,
+        #                       otherwise digest the current md4 hash
         def digest(str = nil)
             if str.nil?
                 finish
@@ -58,13 +83,7 @@ module Digest
             end
         end
 
-        def digest!
-            dig = digest
-            reset
-
-            dig
-        end
-
+        # {include:#digest}
         def hexdigest(str = nil)
             if str.nil?
                 finish
@@ -76,50 +95,56 @@ module Digest
             end
         end
 
-        def hexdigest!
-            hex = hexdigest
-            reset
-
-            hex
-        end
-
+        # Finalize the hash.
+        #
+        # @return  self  to allow method chaining
         def finish
             unless @finalized
-                if @small
-                    @md4.reset
-                    @md4 << @buf
-                else
-                    @md4 << OpenSSL::Digest::MD4.digest(@buf)
-                end
+                @md4 << if @small
+                            @buf
+                        else
+                            MD4.digest(@buf)
+                        end
 
-                @buf = ''
                 @finalized = true
             end
 
             self
         end
 
+        # Shows the current state and the digest class.
+        # If the digest is finalized, it shows the hexdigest.
         def inspect
-            if @finalized
-                "#<ed2k hash='#{digest}'>"
-            else
-                '#<ed2k unfinalized>'
-            end
+            dig = @finalized ? hexdigest : 'unfinalized'
+            "#<#{self.class.name}: #{dig}>"
         end
 
         class << self
-            def digest(data)
-                new(data).digest
+            # Calculate the digest of a string.
+            #
+            # @param  [String] str  the string to digest
+            # @return a finalized digest object
+            def digest(str)
+                new.digest(str)
             end
 
-            def hexdigest(data)
-                new(data).hexdigest
+            # Calculate the hexdigest of a string.
+            # @param  [String] str  the string to digest
+            # @return a finalized digest object
+            def hexdigest(str)
+                new.hexdigest(str)
             end
 
+            # Create a new digest object from a IO object.
+            # @param  [IO] io  the IO object to read
+            # @return a new digest object
             def io(io)
                 new.io(io)
             end
 
+            # Create a new digest object from a file.
+            # @param  [String] file the file to read
+            # @return a new digest object
             def file(path)
                 new.file(path)
             end
@@ -130,7 +155,7 @@ module Digest
         def hash
             while @buf.size >= CHUNK_SIZE
                 @small = false
-                @md4 << OpenSSL::Digest::MD4.digest(@buf.slice!(0...CHUNK_SIZE))
+                @md4 << MD4.digest(@buf.slice!(0...CHUNK_SIZE))
             end
         end
     end

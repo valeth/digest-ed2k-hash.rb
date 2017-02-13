@@ -28,12 +28,13 @@ describe Digest::ED2K do
 
     STRINGS.each do |hash, str|
         it "hashes string '#{str}'" do
-            expect(Digest::ED2K.new(str).hexdigest).to eq(hash)
+            expect(Digest::ED2K.hexdigest(str)).to eq(hash)
         end
     end
 
     it 'raises RuntimeError if updating when finalized' do
-        d = Digest::ED2K.new('hello')
+        d = Digest::ED2K.new
+        d << 'hello'
         d.finish
         expect { d << ' world' }.to raise_error(RuntimeError)
     end
