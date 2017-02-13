@@ -9,9 +9,10 @@ Gem::Specification.new do |spec|
     spec.name          = 'digest-ed2k-hash'
     spec.version       = Digest::ED2K::VERSION
     spec.authors       = ['Valeth']
-    spec.email         = ['']
+    spec.email         = ['patrick.auernig@gmail.com']
+    spec.license       = 'GPL-3.0'
 
-    spec.summary       = ''
+    spec.summary       = 'Implementation of the ED2K hashing algorithm.'
     spec.homepage      = 'https://gitlab.com/valeth/digest-ed2k-hash.rb'
 
     spec.files         = `git ls-files -z`.split("\x0").reject do |f|
@@ -24,5 +25,5 @@ Gem::Specification.new do |spec|
     spec.add_development_dependency 'bundler', '~> 1.14'
     spec.add_development_dependency 'rake',    '~> 10.0'
     spec.add_development_dependency 'rspec',   '~> 3.0'
-    spec.add_development_dependency 'yard'
+    spec.add_development_dependency 'yard',    '~> 0.9'
 end
