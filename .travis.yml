@@ -1,0 +1,17 @@
+language: ruby
+rvm:
+  - 2.2
+  - 2.3
+  - 2.4
+
+install:
+  - gem install rspec bundler yard --no-document
+  - gem install rubocop -v 0.47.1 --no-document
+
+branches:
+  only:
+    - master
+
+script:
+  - rubocop
+  - rspec
