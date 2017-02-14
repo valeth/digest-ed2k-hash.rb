@@ -2,6 +2,8 @@ AllCops:
   TargetRubyVersion: 2.3
   DisplayCopNames: true
   DisplayStyleGuide: true
+  Exclude:
+    - 'spec/**/*'
 
 
 # Because only 2 spaces indent is insane
