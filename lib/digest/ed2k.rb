@@ -127,18 +127,18 @@ module Digest # :nodoc:
         class << self
             # Calculate the digest of a string.
             #
-            # @param  [String] str  the string to digest
+            # @param  [String, IO] data  the string to digest
             # @return a finalized digest object
-            def digest(str)
-                new.digest(str)
+            def digest(data)
+                new.digest(data)
             end
 
             # Calculate the hexdigest of a string.
             #
-            # @param  [String] str  the string to digest
+            # @param  [String, IO] data  the string to digest
             # @return a finalized digest object
-            def hexdigest(str)
-                new.hexdigest(str)
+            def hexdigest(data)
+                new.hexdigest(data)
             end
 
             # Create a new digest object from a IO object.
