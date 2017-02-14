@@ -12,6 +12,11 @@ branches:
   only:
     - master
 
+addons:
+  code_climate:
+    repo_token:
+      baf49ba5ed8b570cece5bc38b499567850718dfd06581c285d90fd2676a4764c
+
 script:
   - rubocop
   - rspec
