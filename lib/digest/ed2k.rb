@@ -25,11 +25,7 @@ module Digest # :nodoc:
         # @param   [IO] io  the IO object that will be read
         # @return  self  to allow method chaining
         def io(io)
-            while (buf = io.read(CHUNK_SIZE))
-                self << buf
-            end
-
-            self
+            self << io
         end
 
         # Calculate the hash of a file.
@@ -46,51 +42,68 @@ module Digest # :nodoc:
         def reset
             @md4.reset
             @finalized = false
-            @small     = true
-            @buf       = ''
 
             self
         end
 
         # Rehash with new data.
         #
-        # @param  [String] data  the chunk of data to add to the hash
+        # @param  [String, IO] data  the chunk of data to add to the hash
         # @return  self  to allow method chaining
         # @raise  RuntimeError  if the digest object has been finalized
         def update(data)
             raise RuntimeError if @finalized
 
-            @buf += data
-            hash
+            # get the IO object
+            buf = to_io(data)
+
+            # if the chunk is smaller than CHUNK_SIZE just return the MD4 hash
+            if buf.size < CHUNK_SIZE
+                @md4 << buf.read
+            else
+                # read chunks from the IO object and update the MD4 hash
+                while (chunk = buf.read(CHUNK_SIZE))
+                    @md4 << MD4.digest(chunk)
+                end
+
+                # weird EDonkey bug requires multiples of CHUNK_SIZE
+                # to append one additional MD4 hash
+                @md4 << MD4.new.digest if multiple?(buf.size)
+            end
 
             self
         end
 
         alias << update
 
-        # Finalize the digest.
+        # Finalize the hash and return the digest.
         #
-        # @param  [String] str  use this string to digest,
-        #                       otherwise digest the current md4 hash
-        def digest(str = nil)
-            if str.nil?
+        # If no string is provided, the current hash is used
+        #
+        # @param  [String, IO] data  hash this chunk of data
+        def digest(data = nil)
+            if data.nil?
                 finish
                 @md4.digest
             else
                 reset
-                self << str
+                self << data
                 digest
             end
         end
 
-        # {include:#digest}
-        def hexdigest(str = nil)
-            if str.nil?
+        # Finalize the hash and return the hexdigest.
+        #
+        # If no string is provided, the current hash is used
+        #
+        # @param  [String, IO] data  hash this chunk of data
+        def hexdigest(data = nil)
+            if data.nil?
                 finish
                 @md4.hexdigest
             else
                 reset
-                self << str
+                self << data
                 hexdigest
             end
         end
@@ -99,15 +112,7 @@ module Digest # :nodoc:
         #
         # @return  self  to allow method chaining
         def finish
-            unless @finalized
-                @md4 << if @small
-                            @buf
-                        else
-                            MD4.digest(@buf)
-                        end
-
-                @finalized = true
-            end
+            @finalized = true unless @finalized
 
             self
         end
@@ -129,6 +134,7 @@ module Digest # :nodoc:
             end
 
             # Calculate the hexdigest of a string.
+            #
             # @param  [String] str  the string to digest
             # @return a finalized digest object
             def hexdigest(str)
@@ -136,6 +142,7 @@ module Digest # :nodoc:
             end
 
             # Create a new digest object from a IO object.
+            #
             # @param  [IO] io  the IO object to read
             # @return a new digest object
             def io(io)
@@ -143,7 +150,8 @@ module Digest # :nodoc:
             end
 
             # Create a new digest object from a file.
-            # @param  [String] file the file to read
+            #
+            # @param  [String] path  the file to read
             # @return a new digest object
             def file(path)
                 new.file(path)
@@ -152,11 +160,18 @@ module Digest # :nodoc:
 
         private
 
-        def hash
-            while @buf.size >= CHUNK_SIZE
-                @small = false
-                @md4 << MD4.digest(@buf.slice!(0...CHUNK_SIZE))
+        def to_io(obj)
+            if obj.is_a? String
+                StringIO.new(obj)
+            elsif obj.is_a? IO
+                obj
+            else
+                raise ArgumentError, "cannot hash #{obj.class.name} object"
             end
+        end
+
+        def multiple?(buf_size)
+            (buf_size % CHUNK_SIZE).zero?
         end
     end
 end
